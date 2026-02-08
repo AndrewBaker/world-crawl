@@ -21,6 +21,7 @@
 
 #include "platform.h"
 #include <stdint.h>
+#include <functional>
 namespace std {}
 using namespace std;
 
