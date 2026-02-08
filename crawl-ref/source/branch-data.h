@@ -18,6 +18,14 @@ const Branch branches[NUM_BRANCHES] =
       LIGHTGREY, BROWN,
       'D', {}, 0 },
 
+    { BRANCH_OPENWORLD, NUM_BRANCHES, 0, 0, 1, 0,
+      BFLAG_NO_ITEMS,
+      NUM_FEATURES, DNGN_EXIT_DUNGEON,
+      "Open World", "the Open World", "Open",
+      nullptr,
+      LIGHTGREY, BROWN,
+      'W', {}, 0 },
+
     { BRANCH_TEMPLE, BRANCH_DUNGEON, 4, 7, 1, 5,
       BFLAG_NO_ITEMS,
       DNGN_ENTER_TEMPLE, DNGN_EXIT_TEMPLE,

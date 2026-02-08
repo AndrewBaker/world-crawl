@@ -58,6 +58,7 @@
 #include "mon-place.h"
 #include "notes.h"
 #include "output.h"
+#include "openworld.h"
 #include "place.h"
 #include "prompt.h"
 #include "spl-summoning.h"
@@ -1367,6 +1368,9 @@ bool load_level(dungeon_feature_type stair_taken, load_mode_type load_mode,
     }
 
     crawl_view.set_player_at(you.pos(), load_mode != LOAD_VISITOR);
+
+    if (load_mode != LOAD_VISITOR)
+        openworld_resync_floor_tiles();
 
     // Actually "move" the followers if applicable.
     if (branch_allows_followers(you.where_are_you)

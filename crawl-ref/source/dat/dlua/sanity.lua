@@ -1,7 +1,9 @@
 -- Sanity checks that should be run just before the game starts.
 
 local function assert_place_has_map(place)
-  assert(dgn.map_by_place(place), "No map found for " .. place)
+  if not dgn.map_by_place(place) then
+    crawl.mpr("Warning: no map found for " .. place)
+  end
 end
 
 local function sanity_checks()

@@ -30,6 +30,7 @@
 
 #include "ability.h"
 #include "abyss.h"
+#include "openworld.h"
 #include "acquire.h"
 #include "act-iter.h"
 #include "adjust.h"
@@ -3587,6 +3588,8 @@ static void _move_player(coord_def move)
 
     if (player_in_branch(BRANCH_ABYSS))
         maybe_shift_abyss_around_player();
+    if (player_in_branch(BRANCH_OPENWORLD))
+        maybe_shift_openworld_around_player();
 
     you.apply_berserk_penalty = !attacking;
 

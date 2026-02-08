@@ -51,7 +51,7 @@ static uint8_t _random_potion_description()
 // Determine starting depths of branches.
 void initialise_branch_depths()
 {
-    root_branch = BRANCH_DUNGEON;
+    root_branch = BRANCH_OPENWORLD;
 
     // XXX: Should this go elsewhere?
     branch_bribe.init(0);
@@ -126,6 +126,9 @@ static void _use_overflow_temple(vector<god_type> temple_gods)
 // overflow temples, and on what level the overflow temples are.
 void initialise_temples()
 {
+    if (root_branch == BRANCH_OPENWORLD)
+        return;
+
     //////////////////////////////////////////
     // First determine main temple map to use.
     level_id ecumenical(BRANCH_TEMPLE, 1);

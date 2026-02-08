@@ -52,6 +52,7 @@
 #include "mapmark.h"
 #include "misc.h"
 #include "mon-death.h"
+#include "openworld.h"
 #if TAG_MAJOR_VERSION == 34
  #include "mon-place.h"
  #include "mon-poly.h"
@@ -1571,6 +1572,10 @@ static void tag_construct_you(writer &th)
     marshallInt(th, abyssal_state.depth);
     marshallFloat(th, abyssal_state.phase);
     marshall_level_id(th, abyssal_state.level);
+
+    marshallBoolean(th, openworld_state.initialized);
+    marshallCoord(th, openworld_state.major_coord);
+    marshallInt(th, openworld_state.seed);
 
 #if TAG_MAJOR_VERSION == 34
     if (abyssal_state.level.branch == BRANCH_DWARF || !abyssal_state.level.is_valid())
@@ -3189,6 +3194,19 @@ static void tag_read_you(reader &th)
 #else
     abyssal_state.level = unmarshall_level_id(th);
 #endif
+
+    if (th.getMinorVersion() >= TAG_MINOR_OPENWORLD_STATE)
+    {
+        openworld_state.initialized = unmarshallBoolean(th);
+        openworld_state.major_coord = unmarshallCoord(th);
+        openworld_state.seed = unmarshallInt(th);
+    }
+    else
+    {
+        openworld_state.initialized = false;
+        openworld_state.major_coord = coord_def(0, 0);
+        openworld_state.seed = 0;
+    }
 
     _unmarshall_constriction(th, &you);
 

@@ -51,6 +51,7 @@ dgn-overview.o \
 dgn-proclayouts.o \
 dgn-shoals.o \
 dgn-swamp.o \
+openworld.o \
 dgnevent.o \
 directn.o \
 dlua.o \

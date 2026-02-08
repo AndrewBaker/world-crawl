@@ -27,6 +27,7 @@ const Branch* branch_iterator::operator*() const
 {
     static const branch_type branch_order[] = {
         BRANCH_DUNGEON,
+        BRANCH_OPENWORLD,
         BRANCH_TEMPLE,
         BRANCH_LAIR,
         BRANCH_SWAMP,

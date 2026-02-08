@@ -728,6 +728,7 @@ enum book_type
 enum branch_type                // you.where_are_you
 {
     BRANCH_DUNGEON,
+    BRANCH_OPENWORLD,
     BRANCH_TEMPLE,
     BRANCH_FIRST_NON_DUNGEON = BRANCH_TEMPLE,
     BRANCH_ORC,

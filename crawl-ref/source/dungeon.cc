@@ -33,6 +33,7 @@
 #include "dgn-delve.h"
 #include "dgn-height.h"
 #include "dgn-labyrinth.h"
+#include "openworld.h"
 #include "dgn-overview.h"
 #include "dgn-shoals.h"
 #include "end.h"
@@ -2198,6 +2199,9 @@ static void _build_dungeon_level(dungeon_feature_type dest_stairs_type)
 {
     bool place_vaults = _builder_by_type();
 
+    if (player_in_branch(BRANCH_OPENWORLD))
+        return;
+
     if (player_in_branch(BRANCH_LABYRINTH))
         return;
 
@@ -2505,7 +2509,13 @@ static bool _pan_level()
 // to place more vaults after this
 static bool _builder_by_type()
 {
-    if (player_in_branch(BRANCH_LABYRINTH))
+    if (player_in_branch(BRANCH_OPENWORLD))
+    {
+        dgn_build_openworld_level();
+        _fixup_branch_stairs();
+        return false;
+    }
+    else if (player_in_branch(BRANCH_LABYRINTH))
     {
         dgn_build_labyrinth_level();
         // Labs placed their minivaults already

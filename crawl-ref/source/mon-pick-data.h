@@ -1098,10 +1098,15 @@ static const pop_entry pop_depths[] =
 // standalone symbols first. Thus this fugly list.
 // Statically defined counts are merely an inconsequential nicety, no need
 // to preserve them.
+static const pop_entry pop_openworld[] =
+{
+  { 0,0,0,FLAT,MONS_0 }
+};
 #define POP(x) { pop_##x, ARRAYSZ(pop_##x) - 1 }
 static const struct { const pop_entry *pop; int count; } population[] =
 {
     POP(d),
+    POP(openworld),
     POP(temple),
     POP(orc),
     POP(elf),
@@ -1210,6 +1215,7 @@ static const pop_entry pop_generic_late_zombie[] =
 static const struct { const pop_entry *pop; int count; } population_zombie[] =
 {
     POP(d),
+  POP(openworld),
     POP(temple),
     POP(orc),
     POP(elf),
@@ -1314,6 +1320,7 @@ static const pop_entry pop_water_hell[] =
 static const struct { const pop_entry *pop; int count; } population_water[] =
 {
     POP(water_d),
+  POP(openworld),
     POP(water_generic),
     POP(water_generic),
     POP(water_generic),
@@ -1418,6 +1425,7 @@ static const pop_entry pop_lava_hell[] =
 static const struct { const pop_entry *pop; int count; } population_lava[] =
 {
     POP(lava_d),
+  POP(openworld),
     POP(lava_generic),
     POP(lava_generic),
     POP(lava_generic),
