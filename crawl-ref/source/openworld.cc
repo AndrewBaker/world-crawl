@@ -12,6 +12,7 @@
 #include "mapmark.h"
 #include "mon-death.h"
 #include "player.h"
+#include "perlin.h"
 #include "random.h"
 #include "shopping.h"
 #include "stash.h"
@@ -27,16 +28,52 @@ static const coord_def OPENWORLD_CENTRE(GXM / 2, GYM / 2);
 static const int OPENWORLD_AREA_SHIFT_RADIUS = LOS_RADIUS + 2;
 static const int OPENWORLD_CHUNK_SIZE = GXM - MAPGEN_BORDER * 2;
 
-static tileidx_t _openworld_floor_tile_for_chunk(const coord_def &chunk)
-{
-    const tileidx_t min_tile = TILE_FLOOR_GREY_DIRT;
-    const tileidx_t max_tile = TILE_FLOOR_MOSAIC_15;
-    const uint32_t count = static_cast<uint32_t>(max_tile - min_tile + 1);
+static const double OPENWORLD_HEIGHT_SCALE = 0.010;
+static const double OPENWORLD_BIOME_SCALE = 0.003;
 
-    const uint64_t h = hash3(openworld_state.seed,
-                             static_cast<uint64_t>(chunk.x),
-                             static_cast<uint64_t>(chunk.y));
-    return static_cast<tileidx_t>(min_tile + (h % count));
+static const double OPENWORLD_DEEP_WATER = -0.40;
+static const double OPENWORLD_SHALLOW_WATER = -0.10;
+static const double OPENWORLD_SAND = 0.10;
+
+static const int OPENWORLD_FOREST_LIGHT_DENSITY = 12;
+static const int OPENWORLD_FOREST_HEAVY_DENSITY = 28;
+
+enum openworld_biome
+{
+    OW_BIOME_GRASSLAND,
+    OW_BIOME_DESERT,
+    OW_BIOME_FOREST_LIGHT,
+    OW_BIOME_FOREST_HEAVY,
+};
+
+static double _openworld_noise(double scale, const coord_def &world, double z)
+{
+    const double x = world.x * scale;
+    const double y = world.y * scale;
+    return perlin::noise(x, y, z);
+}
+
+static double _openworld_height_at(const coord_def &world)
+{
+    const double z = static_cast<double>(openworld_state.seed) * 0.001;
+    return _openworld_noise(OPENWORLD_HEIGHT_SCALE, world, z);
+}
+
+static openworld_biome _openworld_biome_for_chunk(const coord_def &chunk)
+{
+    const double z = static_cast<double>(openworld_state.seed ^ 0x5A5A5A5A)
+                     * 0.001;
+    const coord_def world(chunk.x * OPENWORLD_CHUNK_SIZE,
+                          chunk.y * OPENWORLD_CHUNK_SIZE);
+    const double n = _openworld_noise(OPENWORLD_BIOME_SCALE, world, z);
+
+    if (n < -0.25)
+        return OW_BIOME_DESERT;
+    if (n < 0.10)
+        return OW_BIOME_GRASSLAND;
+    if (n < 0.35)
+        return OW_BIOME_FOREST_LIGHT;
+    return OW_BIOME_FOREST_HEAVY;
 }
 
 static coord_def _openworld_chunk_for_world(const coord_def &world)
@@ -49,11 +86,49 @@ static void _openworld_apply_floor_at(const coord_def &p)
 {
     const coord_def world = openworld_state.major_coord + p;
     const coord_def chunk = _openworld_chunk_for_world(world);
-    const tileidx_t base = _openworld_floor_tile_for_chunk(chunk);
+    const openworld_biome biome = _openworld_biome_for_chunk(chunk);
+    const double height = _openworld_height_at(world);
 
-    grd(p) = DNGN_FLOOR;
-    env.grid_colours(p) = 0;
+    const bool is_deep = height < OPENWORLD_DEEP_WATER;
+    const bool is_shallow = height < OPENWORLD_SHALLOW_WATER && !is_deep;
+    const bool is_sand = height < OPENWORLD_SAND && !is_deep && !is_shallow;
+
     tile_clear_flavour(p);
+    env.grid_colours(p) = 0;
+
+    if (is_deep)
+    {
+        grd(p) = DNGN_DEEP_WATER;
+        return;
+    }
+
+    if (is_shallow)
+    {
+        grd(p) = DNGN_SHALLOW_WATER;
+        return;
+    }
+
+    const bool desert = biome == OW_BIOME_DESERT;
+    const bool sandy = desert || is_sand;
+    const tileidx_t base = sandy ? TILE_FLOOR_SAND : TILE_FLOOR_GRASS;
+
+    bool place_tree = false;
+    if (!sandy && (biome == OW_BIOME_FOREST_LIGHT || biome == OW_BIOME_FOREST_HEAVY))
+    {
+        const int density = biome == OW_BIOME_FOREST_HEAVY
+                            ? OPENWORLD_FOREST_HEAVY_DENSITY
+                            : OPENWORLD_FOREST_LIGHT_DENSITY;
+        const uint64_t h = hash3(openworld_state.seed ^ 0x1BADD00D,
+                                 static_cast<uint64_t>(world.x),
+                                 static_cast<uint64_t>(world.y));
+        place_tree = static_cast<int>(h % 100) < density;
+    }
+
+    if (place_tree && p != OPENWORLD_CENTRE)
+        grd(p) = DNGN_TREE;
+    else
+        grd(p) = DNGN_FLOOR;
+
     env.tile_flv(p).floor = base;
 }
 
@@ -253,14 +328,14 @@ void openworld_resync_floor_tiles()
 
     for (rectangle_iterator ri(MAPGEN_BORDER); ri; ++ri)
     {
-        if (grd(*ri) != DNGN_FLOOR)
+        const dungeon_feature_type feat = grd(*ri);
+        if (feat != DNGN_FLOOR && feat != DNGN_SHALLOW_WATER
+            && feat != DNGN_DEEP_WATER && feat != DNGN_TREE)
+        {
             continue;
+        }
 
-        tile_clear_flavour(*ri);
-        const coord_def world = openworld_state.major_coord + *ri;
-        const coord_def chunk = _openworld_chunk_for_world(world);
-        const tileidx_t base = _openworld_floor_tile_for_chunk(chunk);
-        env.tile_flv(*ri).floor = base;
+        _openworld_apply_floor_at(*ri);
         tile_init_flavour(*ri);
     }
 }
